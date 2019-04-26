@@ -1,25 +1,9 @@
-/*
-Copyright 2017 YANG Huan (sy.yanghuan@gmail.com).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSharpLua {
   class Program {
@@ -30,8 +14,7 @@ Arguments
 
 Options
 -h              : show the help message and exit
--l              : libraries referenced, use ';' to separate
-                  if the librarie is a module, whitch is compield by CSharp.lua with -module arguemnt, the last character needs to be '!' in order to mark  
+-l              : 输入[包含一群dll文件的文件夹]的路径，比如C:\Users\Administrator\Desktop\dll 
 
 -m              : meta files, like System.xml, use ';' to separate
 -csc            : csc.exe command argumnets, use ' ' or '\t' to separate
@@ -42,6 +25,7 @@ Options
 -module         : the currently compiled assembly needs to be referenced, it's useful for multiple module compiled
 ";
     public static void Main(string[] args) {
+      
       if (args.Length > 0) {
         try {
           var cmds = Utility.GetCommondLines(args);
@@ -54,7 +38,17 @@ Options
 
           string folder = cmds.GetArgument("-s");
           string output = cmds.GetArgument("-d");
-          string lib = cmds.GetArgument("-l", true);
+          string libPath = cmds.GetArgument("-l", true);
+          
+          var files = Directory.GetFiles(libPath, "*.dll");
+          string allDll = "";
+          for(int i=1;i<=files.Length;i++)
+            if (i == files.Length) {
+              allDll += files[i-1];
+            } else {
+              allDll += files[i - 1] + ";";
+            }
+          
           string meta = cmds.GetArgument("-m", true);
           bool isClassic = cmds.ContainsKey("-c");
           string atts = cmds.GetArgument("-a", true);
@@ -64,7 +58,7 @@ Options
           string csc = GetCSCArgument(args);
           bool isExportMetadata = cmds.ContainsKey("-metadata");
           bool isModule = cmds.ContainsKey("-module");
-          Compiler c = new Compiler(folder, output, lib, meta, csc, isClassic, atts) {
+          Compiler c = new Compiler(folder, output, allDll, meta, csc, isClassic, atts) {
             IsExportMetadata = isExportMetadata,
             IsModule = isModule,
           };
